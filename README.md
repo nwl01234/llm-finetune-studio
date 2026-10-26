@@ -13,6 +13,7 @@
 |---|---|
 | `app/main.py` | FastAPI: запуска джобов, чтение метрик |
 | `app/trainer.py` | движок: датасет, обучение, очередь джобов в потоках, метрики по эпохам |
+| `app/eval.py` | оценка качества: golden-датасет, consistency, LLM-as-a-judge (rule-based fallback), регрессия прогонов |
 | `static/index.html` | дашборд: тёмная тема, vanilla JS, живой график лосса |
 | `demo.py` | обучение без браузера, печать метрик в stdout |
 | `tests/test_trainer.py` | 3 теста: seed-датасет, рост accuracy, поиск джобы по id |

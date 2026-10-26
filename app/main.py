@@ -35,3 +35,10 @@ def job_metrics(job_id: str):
     if not job:
         raise HTTPException(404, "job not found")
     return job
+
+
+@app.post("/api/eval/run")
+def eval_run():
+    """Отчёт качества: golden set, consistency данных, judge accuracy, регрессия."""
+    from app import eval as ev
+    return ev.eval_report()
