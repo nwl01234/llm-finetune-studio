@@ -5,6 +5,7 @@ from app import trainer
 if __name__ == "__main__":
     n = len(trainer.SEED)
     print(f"датасет: support — {n} примеров, MLP numpy (backprop, mini-batch SGD)")
+    trainer.seed_dataset()
     job = trainer.run_job("support", epochs=15, lr=0.05, hidden=64,
                           val_split=0.2, batch=8, seed=42)
     print(f"параметров: {job['params']}, словарь: {job['vocab_size']}, "
