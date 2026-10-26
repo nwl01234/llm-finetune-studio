@@ -2,6 +2,9 @@
 
 ![LLM Finetune Studio](.assets/banner.svg)
 
+![Дашборд](skrin/dashboard.png)
+![Кривая обучения](skrin/loss_curve.svg)
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![CI](https://img.shields.io/github/actions/workflow/status/nwl01234/llm-finetune-studio/ci.yml?label=CI&logo=github)

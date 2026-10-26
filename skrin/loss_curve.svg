@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="280" viewBox="0 0 720 280">
+<rect width="720" height="280" fill="#0d1117"/>
+<text x="360.0" y="26" fill="#e6edf3" font-size="16" text-anchor="middle" font-family="sans-serif">Training: loss 0.5754 -&gt; 0.0194, accuracy 85% -&gt; 100% (8 epochs)</text>
+<line x1="50" y1="230" x2="670" y2="230" stroke="#21262d"/>
+<line x1="50" y1="185" x2="670" y2="185" stroke="#21262d"/>
+<line x1="50" y1="140" x2="670" y2="140" stroke="#21262d"/>
+<line x1="50" y1="95" x2="670" y2="95" stroke="#21262d"/>
+<line x1="50" y1="50" x2="670" y2="50" stroke="#21262d"/>
+<polyline points="50.0,50.0 138.6,193.0 227.1,210.0 315.7,216.3 404.3,219.6 492.9,221.6 581.4,222.9 670.0,223.9" fill="none" stroke="#58a6ff" stroke-width="2.5"/>
+<polyline points="50.0,76.2 138.6,50.0 227.1,50.0 315.7,50.0 404.3,50.0 492.9,50.0 581.4,50.0 670.0,50.0" fill="none" stroke="#3fb950" stroke-width="2.5"/>
+<text x="712" y="60" fill="#58a6ff" font-size="13" text-anchor="end" font-family="sans-serif">loss</text>
+<text x="712" y="78" fill="#3fb950" font-size="13" text-anchor="end" font-family="sans-serif">accuracy</text>
+</svg>

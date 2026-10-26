@@ -3,3 +3,6 @@ __pycache__/
 .pytest_cache/
 data/
 .env
+PLAN.md
+make_svg.py
+.env
