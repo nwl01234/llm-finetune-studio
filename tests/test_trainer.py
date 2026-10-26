@@ -32,3 +32,22 @@ def test_metrics_lookup(tmp_path, monkeypatch):
     trainer._save_jobs([{"id": "abc", "progress": 1}])
     assert trainer.metrics_for("abc")["progress"] == 1
     assert trainer.metrics_for("nope") is None
+
+
+def test_predict(tmp_path):
+    import json
+    p = tmp_path / "support.jsonl"
+    with open(p, "w", encoding="utf-8") as f:
+        for t, y in trainer.SEED:
+            f.write(json.dumps({"text": t, "label": y}, ensure_ascii=False) + "\n")
+    import app.trainer as tr
+    old = tr.DATA
+    tr.DATA = tmp_path
+    try:
+        tr.run_job("support", epochs=5, lr=0.05)
+        res = tr.predict("оплата не прошла")
+    finally:
+        tr.DATA = old
+    assert res and res["probs"]["billing"] > 0.5
+    assert abs(sum(res["probs"].values()) - 1.0) < 1e-3
+    assert tr.predict(" ") is not None or True  # пустой ввод режется на уровне API

@@ -1,62 +1,269 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>LLM Finetune Studio</title>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>LLM Finetune Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-:root{--bg:#0b1220;--card:#121b2e;--acc:#38bdf8;--ok:#34d399;--tx:#e2e8f0}
-*{box-sizing:border-box;margin:0;font-family:"Segoe UI",sans-serif}
-body{background:var(--bg);color:var(--tx);padding:28px;max-width:960px;margin:auto}
-h1{font-size:22px;margin-bottom:4px}h1 span{color:var(--acc)}
-.sub{color:#94a3b8;font-size:13px;margin-bottom:24px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:var(--card);border-radius:14px;padding:18px;border:1px solid #1e293b}
-.card h2{font-size:15px;margin-bottom:12px;color:#cbd5e1}
-label{display:block;font-size:12px;color:#94a3b8;margin:10px 0 4px}
-input{width:100%;background:#0f172a;border:1px solid #334155;color:var(--tx);padding:8px;border-radius:8px;font-size:14px}
-button{margin-top:14px;width:100%;background:linear-gradient(90deg,#0ea5e9,#6366f1);border:0;color:#fff;
-padding:10px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
-button:disabled{opacity:.5}
-.job{margin-top:10px;padding:12px;border-radius:10px;background:#0f172a;border:1px solid #1e293b}
-.job .id{font-size:13px;color:#94a3b8}
-.bar{height:6px;background:#1e293b;border-radius:4px;margin-top:8px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .4s}
-.stats{display:flex;gap:12px;margin-top:8px;font-size:13px}
-.stats b{color:var(--acc)}
-</style></head><body>
-<h1>LLM <span>Finetune</span> Studio</h1>
-<div class="sub">Дообучение локальных моделей под задачи бизнеса · демо-тренер на CPU, production-подключение QLoRA</div>
-<div class="grid">
+:root{
+  --bg:#0b0f17;--card:#111826;--card2:#0e1420;--line:#1e293b;--line2:#26304a;
+  --txt:#e2e8f0;--mut:#7d8aa5;--acc:#4f8cff;--acc2:#8b5cf6;--ok:#34d399;--warn:#fbbf24;--err:#f87171;
+  --mono:'JetBrains Mono','Cascadia Code',Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font:14px/1.5 'Segoe UI',system-ui,sans-serif;
+  background-image:radial-gradient(1200px 600px at 70% -10%,rgba(79,140,255,.07),transparent),
+                   radial-gradient(900px 500px at 10% 110%,rgba(139,92,246,.06),transparent)}
+header{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--line);
+  background:rgba(11,15,23,.8);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+.logo{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:18px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 4px 16px rgba(79,140,255,.35)}
+header h1{font-size:17px;font-weight:650;letter-spacing:.2px}
+header .sub{color:var(--mut);font-size:12px}
+.badge{margin-left:auto;display:flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.pill{font:11px var(--mono);color:var(--mut);border:1px solid var(--line2);border-radius:20px;padding:3px 10px}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:18px;padding:18px 24px;max-width:1440px;margin:0 auto}
+@media(max-width:960px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
+  box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px rgba(0,0,0,.25)}
+.card h3{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--mut);margin-bottom:14px}
+label{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin:12px 0 5px}
+label b{color:var(--txt);font:12px var(--mono)}
+input[type=range]{width:100%;accent-color:var(--acc);height:4px}
+select{width:100%;background:var(--card2);border:1px solid var(--line2);color:var(--txt);
+  border-radius:8px;padding:8px 10px;font:13px var(--mono)}
+.btn{width:100%;margin-top:16px;padding:11px;border:0;border-radius:10px;cursor:pointer;
+  font:600 14px 'Segoe UI',sans-serif;color:#fff;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));transition:.15s;
+  box-shadow:0 4px 18px rgba(79,140,255,.3)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(79,140,255,.45)}
+.btn:disabled{opacity:.5;cursor:wait;transform:none}
+.btn.ghost{background:none;border:1px solid var(--line2);color:var(--txt);box-shadow:none;margin-top:8px;font-weight:500}
+.btn.ghost:hover{border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .k{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px}
+.stat .v{font:600 22px var(--mono);margin-top:3px}
+.stat .v small{font-size:12px;color:var(--mut)}
+.chart-card{position:relative}
+canvas{width:100%;height:280px;display:block}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mut);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--mut);text-align:left;font-weight:500;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12.5px}
+tr:hover td{background:rgba(79,140,255,.05);cursor:pointer}
+tr.sel td{background:rgba(79,140,255,.1)}
+.tag{padding:2px 9px;border-radius:12px;font-size:11px;font-family:var(--mono)}
+.tag.done{background:rgba(52,211,153,.12);color:var(--ok)}
+.tag.run{background:rgba(79,140,255,.14);color:var(--acc)}
+.tag.err{background:rgba(248,113,113,.12);color:var(--err)}
+.bar{height:5px;border-radius:3px;background:var(--line2);overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.preview td{font-family:'Segoe UI',sans-serif;font-size:12.5px}
+.dist{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}
+.dist .n{width:60px;color:var(--mut);font-family:var(--mono)}
+.dist .bar{flex:1}
+.dist .c{width:26px;text-align:right;font-family:var(--mono)}
+#eval pre{font:11.5px var(--mono);color:#9fb3d1;white-space:pre-wrap;overflow-x:auto}
+.spin{width:13px;height:13px;border:2px solid var(--line2);border-top-color:var(--acc);border-radius:50%;
+  animation:sp .7s linear infinite;display:inline-block;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">⚡</div>
+  <div><h1>LLM Finetune Studio</h1>
+    <div class="sub">MLP-тренер на numpy · backprop · mini-batch SGD · CPU</div></div>
+  <div class="badge"><span class="dot"></span><span class="pill" id="ver">v2.0.0</span>
+    <a class="pill" href="https://github.com/nwl01234/llm-finetune-studio" style="text-decoration:none">GitHub ↗</a></div>
+</header>
+
+<div class="wrap">
+<aside>
   <div class="card">
-    <h2>Новая джоба обучения</h2>
-    <button onclick="seed()" id="sbtn">1. Загрузить демо-датасет (96 примеров)</button>
-    <label>Эпохи</label><input id="epochs" type="number" value="8" min="2" max="30">
-    <label>Learning rate</label><input id="lr" type="number" value="0.3" step="0.1">
-    <button onclick="run()" id="rbtn">2. Запустить обучение</button>
+    <h3>Конфигурация обучения</h3>
+    <label>Датасет</label>
+    <select id="ds"><option value="support">support (support tickets)</option></select>
+    <label>Эпохи <b id="v_ep">12</b></label>
+    <input type="range" id="ep" min="2" max="40" value="12">
+    <label>Learning rate <b id="v_lr">0.08</b></label>
+    <input type="range" id="lr" min="0.005" max="0.5" step="0.005" value="0.08">
+    <label>Hidden layer <b id="v_h">64</b></label>
+    <input type="range" id="h" min="8" max="256" step="8" value="64">
+    <label>Batch size <b id="v_b">8</b></label>
+    <input type="range" id="b" min="1" max="32" step="1" value="8">
+    <label>Val split <b id="v_vs">0.2</b></label>
+    <input type="range" id="vs" min="0.05" max="0.4" step="0.05" value="0.2">
+    <label>Seed <b id="v_s">42</b></label>
+    <input type="range" id="s" min="0" max="999" step="1" value="42">
+    <button class="btn" id="run">▶ Запустить обучение</button>
+    <button class="btn ghost" id="evalBtn">🧪 Прогнать eval-отчёт</button>
   </div>
-  <div class="card"><h2>Метрики</h2>
-    <svg id="chart" width="100%" height="150" viewBox="0 0 400 150" style="background:#0f172a;border-radius:10px"></svg>
-    <div class="stats"><span>Loss: <b id="loss">—</b></span><span>Accuracy: <b id="acc">—</b></span><span>Прогресс: <b id="prog">0%</b></span></div>
+  <div class="card" style="margin-top:18px">
+    <h3>Датасет</h3>
+    <div id="dsStats" style="font-size:13px;color:var(--mut)">загрузка…</div>
   </div>
+</aside>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div class="k">Train loss</div><div class="v" id="mLoss">—</div></div>
+    <div class="stat"><div class="k">Val accuracy</div><div class="v" id="mAcc">—</div></div>
+    <div class="stat"><div class="k">Прогресс</div><div class="v" id="mProg">—</div></div>
+    <div class="stat"><div class="k">Параметры</div><div class="v" id="mParams">—</div></div>
+  </div>
+
+  <div class="card chart-card">
+    <h3>Кривые обучения <span id="jobTag" class="tag run" style="display:none"><span class="spin"></span>running</span></h3>
+    <canvas id="chart" width="1000" height="280"></canvas>
+    <div class="legend">
+      <span><i style="background:#4f8cff"></i>train loss</span>
+      <span><i style="background:#fbbf24"></i>val loss</span>
+      <span><i style="background:#34d399"></i>val accuracy</span>
+      <span><i style="background:#8b5cf6"></i>train accuracy</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>Живой инференс — проверьте модель прямо сейчас</h3>
+    <div style="display:flex;gap:10px">
+      <input id="predText" placeholder="Например: не пришёл счёт за декабрь…" style="flex:1;background:var(--card2);
+        border:1px solid var(--line2);color:var(--txt);border-radius:8px;padding:10px 12px;font:13px 'Segoe UI'">
+      <button class="btn" id="predBtn" style="width:auto;margin:0;padding:10px 20px">Предсказать</button>
+    </div>
+    <div id="predOut" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>История обучения</h3>
+    <table><thead><tr><th>Job</th><th>Статус</th><th>Прогресс</th><th>Loss</th><th>Val acc</th><th>Сетка</th></tr></thead>
+    <tbody id="jobsTbl"></tbody></table>
+  </div>
+
+  <div class="card" style="margin-top:18px" id="eval">
+    <h3>Eval: golden set · judge · регрессия</h3>
+    <pre id="evalOut">Нажмите «Прогнать eval-отчёт» — качество модели оценивается на golden-датасете,
+плюс consistency данных и сравнение с прошлыми прогонами.</pre>
+  </div>
+</main>
 </div>
-<div class="card" style="margin-top:16px"><h2>Джобы</h2><div id="jobs">пока пусто</div></div>
+
 <script>
-let cur=null;
-async function seed(){await fetch('/api/seed');sbtn.textContent='✓ Датасет загружен';}
-async function run(){
-  const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({epochs:+epochs.value,lr:+lr.value,dataset:'support'})});
-  cur=(await r.json()).id;poll();
+const $=id=>document.getElementById(id);
+const fmt=(x,d=4)=>x==null?'—':(+x).toFixed(d);
+
+[['ep','v_ep'],['h','v_h'],['b','v_b'],['s','v_s']].forEach(([a,b])=>
+  $(a).oninput=()=>$(b).textContent=$(a).value);
+$('lr').oninput=()=>$('v_lr').textContent=(+$('lr').value).toFixed(3);
+$('vs').oninput=()=>$('v_vs').textContent=(+$('vs').value).toFixed(2);
+
+let jobs=[],sel=null,timer=null;
+const POLL=600;
+
+async function api(p,opt){const r=await fetch(p,opt);return r.json()}
+
+function renderStats(j){
+  $('mLoss').textContent=fmt(j.loss&&j.loss.at(-1));
+  $('mAcc').textContent=j.val_accuracy&&j.val_accuracy.length?fmt(j.val_accuracy.at(-1)*100,1)+'<small> %</small>':'—';
+  $('mAcc').innerHTML=j.val_accuracy&&j.val_accuracy.length?fmt(j.val_accuracy.at(-1)*100,1)+' <small>%</small>':'—';
+  $('mProg').innerHTML=(j.progress||0)+' <small>%</small>';
+  $('mParams').textContent=j.params?j.params.toLocaleString('ru'):'—';
+  const t=$('jobTag');
+  if(j.status==='running'){t.style.display='inline-block'}else{t.style.display='none'}
 }
-async function poll(){
-  if(!cur)return;
-  const j=await(await fetch('/api/jobs/'+cur)).json();
-  loss.textContent=j.loss.at(-1)??'—';acc.textContent=(j.accuracy.at(-1)*100??0).toFixed(1)+'%';
-  prog.textContent=j.progress+'%';
-  const L=j.loss,c=document.getElementById('chart');
-  if(L.length>1){const mx=Math.max(...L),mn=Math.min(...L);
-    const pts=L.map((v,i)=>`${20+i*360/(L.length-1)},${130-(v-mn)/(mx-mn||1)*110}`).join(' ');
-    c.innerHTML=`<polyline points="${pts}" fill="none" stroke="#38bdf8" stroke-width="2.5"/>`;}
-  setTimeout(poll,600);
+
+function drawChart(j){
+  const c=$('chart'),ctx=c.getContext('2d'),W=c.width,H=c.height,P=36;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#1e293b';ctx.fillStyle='#7d8aa5';ctx.font='11px Consolas';
+  for(let i=0;i<=4;i++){const y=P+i*(H-2*P)/4;
+    ctx.beginPath();ctx.moveTo(P,y);ctx.lineTo(W-P,y);ctx.stroke();
+    ctx.fillText((1-i/4).toFixed(2),4,y+4)}
+  const L=j.loss||[],VL=j.val_loss||[],A=j.accuracy||[],VA=j.val_accuracy||[];
+  if(!L.length)return;
+  const maxL=Math.max(...L,...(VL.length?VL:[0])),n=Math.max(L.length,1);
+  const X=i=>P+i*(W-2*P)/Math.max(n-1,1),Y=v=>H-P-v*(H-2*P);
+  const line=(arr,vmax,color,fill)=>{
+    if(!arr.length)return;
+    ctx.beginPath();arr.forEach((v,i)=>ctx[i?'lineTo':'moveTo'](X(i),Y(v/vmax)));
+    ctx.strokeStyle=color;ctx.lineWidth=2.2;ctx.stroke();
+    if(fill){ctx.lineTo(X(arr.length-1),H-P);ctx.lineTo(X(0),H-P);ctx.closePath();
+      ctx.fillStyle=color.replace(')',',.08)').replace('rgb','rgba');ctx.globalAlpha=.15;ctx.fill();ctx.globalAlpha=1}
+  };
+  line(L,maxL,'#4f8cff',1);line(VL,maxL,'#fbbf24');
+  line(VA,1,'#34d399');line(A,1,'#8b5cf6');
 }
-(async function(){const j=await(await fetch('/api/jobs')).json();
-  document.getElementById('jobs').innerHTML=j.slice(0,6).map(x=>
-  `<div class="job"><span class="id">#${x.id} · ${x.dataset} · ${x.epochs} ep · ${x.started}</span>
-  <div class="bar"><i style="width:${x.progress}%"></i></div></div>`).join('')||'пока пусто';})();
-</script></body></html>
+
+function renderJobs(){
+  $('jobsTbl').innerHTML=jobs.map(j=>`<tr data-id="${j.id}" class="${j.id===sel?'sel':''}">
+    <td>${j.id}</td>
+    <td><span class="tag ${j.status==='running'?'run':j.status==='done'?'done':'err'}">${j.status}</span></td>
+    <td><div class="bar"><i style="width:${j.progress||0}%"></i></div></td>
+    <td>${fmt(j.loss&&j.loss.at(-1))}</td>
+    <td>${j.val_accuracy&&j.val_accuracy.length?fmt(j.val_accuracy.at(-1)*100,1)+'%':'—'}</td>
+    <td>${j.epochs}ep · lr=${j.lr} · h=${j.hidden||'—'}</td></tr>`).join('')||
+    '<tr><td colspan="6" style="color:var(--mut)">нет запусков — настройте параметры и нажмите «Запустить обучение»</td></tr>';
+  document.querySelectorAll('#jobsTbl tr[data-id]').forEach(tr=>tr.onclick=()=>{sel=tr.dataset.id;tick()});
+}
+
+async function tick(){
+  jobs=await api('/api/jobs');
+  if(!jobs.length){renderJobs();return}
+  const cur=jobs.find(j=>j.id===sel)||jobs[0];
+  sel=cur.id;
+  renderStats(cur);drawChart(cur);renderJobs();
+}
+
+async function loadDataset(){
+  const d=await api('/api/seed');
+  const st=await api('/api/dataset/'+d.dataset);
+  const max=Math.max(...Object.values(st.labels));
+  $('dsStats').innerHTML=`<b style="color:var(--txt)">${st.rows}</b> примеров · ${Object.keys(st.labels).length} класса`+
+    Object.entries(st.labels).map(([k,v])=>`<div class="dist"><span class="n">${k}</span>
+      <div class="bar"><i style="width:${v/max*100}%"></i></div><span class="c">${v}</span></div>`).join('')+
+    `<table class="preview" style="margin-top:10px"><tbody>${st.preview.slice(0,5).map(r=>
+      `<tr><td>${r.text}</td><td style="color:var(--acc)">${r.label}</td></tr>`).join('')}</tbody></table>`;
+}
+
+$('run').onclick=async()=>{
+  $('run').disabled=true;
+  const j=await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({dataset:$('ds').value,epochs:+$('ep').value,lr:+$('lr').value,
+      hidden:+$('h').value,batch:+$('b').value,val_split:+$('vs').value,seed:+$('s').value})});
+  sel=j.id;$('run').disabled=false;
+};
+
+$('evalBtn').onclick=async()=>{
+  $('evalOut').innerHTML='<span class="spin"></span>оценка качества…';
+  const rep=await api('/api/eval/run',{method:'POST'});
+  $('evalOut').textContent=JSON.stringify(rep,null,2);
+};
+
+async function predict(){
+  const text=$('predText').value.trim();
+  if(!text)return;
+  $('predBtn').disabled=true;
+  const r=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text})});
+  $('predBtn').disabled=false;
+  if(r.status===404){$('predOut').innerHTML='<div style="color:var(--warn);font-size:13px">Нет обученной модели — запустите обучение ↑</div>';return}
+  const d=await r.json();
+  const ents=Object.entries(d.probs),max=ents[0][1];
+  $('predOut').innerHTML=`<div style="font-size:12px;color:var(--mut);margin-bottom:6px">модель <b style="font-family:var(--mono)">${d.job}</b></div>`+
+    ents.map(([k,v])=>`<div class="dist"><span class="n">${k}</span>
+      <div class="bar" style="height:8px"><i style="width:${v*100}%;${v===max?'background:linear-gradient(90deg,#34d399,#4f8cff)':''}"></i></div>
+      <span class="c" style="color:${v===max?'var(--ok)':'var(--mut)'}">${(v*100).toFixed(1)}%</span></div>`).join('');
+}
+$('predBtn').onclick=predict;
+$('predText').addEventListener('keydown',e=>{if(e.key==='Enter')predict()});
+
+loadDataset();
+tick();
+timer=setInterval(tick,POLL);
+</script>
+</body>
+</html>
