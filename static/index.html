@@ -1,0 +1,62 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>LLM Finetune Studio</title>
+<style>
+:root{--bg:#0b1220;--card:#121b2e;--acc:#38bdf8;--ok:#34d399;--tx:#e2e8f0}
+*{box-sizing:border-box;margin:0;font-family:"Segoe UI",sans-serif}
+body{background:var(--bg);color:var(--tx);padding:28px;max-width:960px;margin:auto}
+h1{font-size:22px;margin-bottom:4px}h1 span{color:var(--acc)}
+.sub{color:#94a3b8;font-size:13px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--card);border-radius:14px;padding:18px;border:1px solid #1e293b}
+.card h2{font-size:15px;margin-bottom:12px;color:#cbd5e1}
+label{display:block;font-size:12px;color:#94a3b8;margin:10px 0 4px}
+input{width:100%;background:#0f172a;border:1px solid #334155;color:var(--tx);padding:8px;border-radius:8px;font-size:14px}
+button{margin-top:14px;width:100%;background:linear-gradient(90deg,#0ea5e9,#6366f1);border:0;color:#fff;
+padding:10px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5}
+.job{margin-top:10px;padding:12px;border-radius:10px;background:#0f172a;border:1px solid #1e293b}
+.job .id{font-size:13px;color:#94a3b8}
+.bar{height:6px;background:#1e293b;border-radius:4px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .4s}
+.stats{display:flex;gap:12px;margin-top:8px;font-size:13px}
+.stats b{color:var(--acc)}
+</style></head><body>
+<h1>LLM <span>Finetune</span> Studio</h1>
+<div class="sub">Дообучение локальных моделей под задачи бизнеса · демо-тренер на CPU, production-подключение QLoRA</div>
+<div class="grid">
+  <div class="card">
+    <h2>Новая джоба обучения</h2>
+    <button onclick="seed()" id="sbtn">1. Загрузить демо-датасет (96 примеров)</button>
+    <label>Эпохи</label><input id="epochs" type="number" value="8" min="2" max="30">
+    <label>Learning rate</label><input id="lr" type="number" value="0.3" step="0.1">
+    <button onclick="run()" id="rbtn">2. Запустить обучение</button>
+  </div>
+  <div class="card"><h2>Метрики</h2>
+    <svg id="chart" width="100%" height="150" viewBox="0 0 400 150" style="background:#0f172a;border-radius:10px"></svg>
+    <div class="stats"><span>Loss: <b id="loss">—</b></span><span>Accuracy: <b id="acc">—</b></span><span>Прогресс: <b id="prog">0%</b></span></div>
+  </div>
+</div>
+<div class="card" style="margin-top:16px"><h2>Джобы</h2><div id="jobs">пока пусто</div></div>
+<script>
+let cur=null;
+async function seed(){await fetch('/api/seed');sbtn.textContent='✓ Датасет загружен';}
+async function run(){
+  const r=await fetch('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({epochs:+epochs.value,lr:+lr.value,dataset:'support'})});
+  cur=(await r.json()).id;poll();
+}
+async function poll(){
+  if(!cur)return;
+  const j=await(await fetch('/api/jobs/'+cur)).json();
+  loss.textContent=j.loss.at(-1)??'—';acc.textContent=(j.accuracy.at(-1)*100??0).toFixed(1)+'%';
+  prog.textContent=j.progress+'%';
+  const L=j.loss,c=document.getElementById('chart');
+  if(L.length>1){const mx=Math.max(...L),mn=Math.min(...L);
+    const pts=L.map((v,i)=>`${20+i*360/(L.length-1)},${130-(v-mn)/(mx-mn||1)*110}`).join(' ');
+    c.innerHTML=`<polyline points="${pts}" fill="none" stroke="#38bdf8" stroke-width="2.5"/>`;}
+  setTimeout(poll,600);
+}
+(async function(){const j=await(await fetch('/api/jobs')).json();
+  document.getElementById('jobs').innerHTML=j.slice(0,6).map(x=>
+  `<div class="job"><span class="id">#${x.id} · ${x.dataset} · ${x.epochs} ep · ${x.started}</span>
+  <div class="bar"><i style="width:${x.progress}%"></i></div></div>`).join('')||'пока пусто';})();
+</script></body></html>
