@@ -14,12 +14,12 @@
 
 | Модуль | Что делает |
 |---|---|
-| `app/main.py` | FastAPI: запуска джобов, чтение метрик |
-| `app/trainer.py` | движок: датасет, обучение, очередь джобов в потоках, метрики по эпохам |
+| `app/main.py` | FastAPI: запуск джобов, статистика датасета, живой инференс `POST /api/predict` |
+| `app/trainer.py` | numpy MLP-тренер: TF-IDF, backprop, mini-batch SGD + momentum, L2, val split |
 | `app/eval.py` | оценка качества: golden-датасет, consistency, LLM-as-a-judge (rule-based fallback), регрессия прогонов |
-| `static/index.html` | дашборд: тёмная тема, vanilla JS, живой график лосса |
+| `static/index.html` | дашборд: конфиг-панель, живые canvas-кривые, инференс-карточка, история джобов |
 | `demo.py` | обучение без браузера, печать метрик в stdout |
-| `tests/test_trainer.py` | 3 теста: seed-датасет, рост accuracy, поиск джобы по id |
+| `tests/test_trainer.py` | 7 тестов: seed, рост accuracy, поиск джобы, инференс на обученной модели |
 
 ## Датасет и обучение
 
@@ -27,25 +27,28 @@
 `billing`, `tech`, `refund`, `sales` (обращения в поддержку). Структура записи:
 `{"text": "оплата не прошла", "label": "billing"}`.
 
-Признаки: tokenizer — split по словам и lower-case set(), словарь (vocab) собирается
-один раз по всей выборке. Дальше softmax-классификатор:
+Пайплайн признаков и сеть:
 
 ```
-W[c][w] + b[c]              — вес класса c на слове w
-score(c) = b[c] + Σ W[c][vocab[w]]   по всем словам запроса
-p(y|x) = softmax(score)     — по всем классам
-loss += -log(p[y])          — кросс-энтропия на примере
-SGD: lr=0.3, 8 эпох (default), порядок примеров перемешивается с seed=epoch
+TF-IDF:  sublinear tf (1+ln tf) × сглаженный idf (ln(n/(1+df))+1)
+MLP:     input(V) → hidden(ReLU, He-init) → softmax(C классов)
+Backprop: softmax + CE градиент, ReLU-маска, L2-регуляризация
+Оптимизатор: mini-batch SGD + momentum 0.9
+Валидация: детерминированный train/val split по seed — метрики честные
+Модель:  веса + vocab + idf сохраняются в job — доступен живой инференс
 ```
 
-Метрики по каждой эпохе пишутся в job dicts: `loss[]`, `accuracy[]`, `progress%` —
-добавляются в JSON (`data/jobs.json`): дашборд читает их и рисует кривую без поллинга.
+Метрики по каждой эпохе пишутся в job dicts: `loss[]`, `accuracy[]`, `val_loss[]`,
+`val_accuracy[]`, `progress%` — дашборд рисует кривые train/val без поллинга.
 
-Прогон `python demo.py`: **loss 0.5754 → 0.0194, accuracy 0 → 100% за 8 эпох**
-(на простом синтетичном датасете; честные метрики, не мок).
+Прогон `python demo.py`: **loss 0.9217 → 0.0003, val accuracy 100% за 15 эпох**,
+сеть 3 524 параметра на 50-словном словаре. Метрики честные, не мок.
 
-Тренер — сменный модуль: интерфейс `_train(job)` изолирован, подмена на
-QLoRA (torch + peft + локальная Qwen2.5/Llama) не меняет API и дашборд.
+Живой инференс: после обучения — `POST /api/predict {"text": "не пришёл счёт"}`
+возвращает вероятности классов по обученной модели (TF-IDF → forward → softmax).
+
+Тренер — сменный модуль: интерфейс `start_job/run_job/_train(job)` изолирован,
+подмена на QLoRA (torch + peft + локальная Qwen2.5/Llama) не меняет API и дашборд.
 
 ## Job Runner
 
@@ -57,9 +60,13 @@ QLoRA (torch + peft + локальная Qwen2.5/Llama) не меняет API и
 
 ```
 GET  /api/seed            — создать демо-датасет (96 примеров)
-POST /api/jobs            — {"dataset":"support", "epochs":8, "lr":0.3} → id джобы
+GET  /api/dataset/{name}  — статистика датасета: размер, распределение классов, превью
+POST /api/jobs            — {"dataset":"support","epochs":12,"lr":0.08,"hidden":64,
+                             "batch":8,"val_split":0.2,"seed":42} → id джобы
 GET  /api/jobs            — список джобов со статусом/прогрессом
-GET  /api/jobs/{id}       — метрики поля по id
+GET  /api/jobs/{id}       — метрики джобы по id
+POST /api/predict         — {"text":"не пришёл счёт"} → вероятности классов
+POST /api/eval/run        — отчёт качества: golden set, judge, регрессия
 ```
 
 ## Запуск
@@ -68,7 +75,7 @@ GET  /api/jobs/{id}       — метрики поля по id
 pip install -r requirements.txt
 uvicorn app.main:app --port 8090   # дашборд: http://localhost:8090
 python demo.py                     # то же обучение без браузера с выводом метрик
-pytest tests/ -q                   # 3 теста: seed, метрики растут, поиск по id
+pytest tests/ -q                   # 7 тестов: seed, метрики, инференс, поиск по id
 ```
 
 ## Что дальше
